@@ -584,25 +584,6 @@ copies or substantial portions of the Software.
 
 ---
 
-## 📧 Contact & Support
 
-For questions, issues, or suggestions:
 
-- 📧 Email: support@chillivision.local
-- 🐛 Issues: Open an issue on GitHub
-- 💬 Discussions: Community discussions available
 
----
-
-## 🙏 Acknowledgments
-
-- MobileNetV2 architecture (Howard et al., 2018)
-- GradCAM visualization (Selvaraju et al., 2016)
-- PyTorch and OpenCV communities
-- Indian agricultural research institutions
-
----
-
-**Last Updated:** May 15, 2026  
-**Version:** 1.0  
-**Status:** Production Ready ✅
