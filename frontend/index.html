@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChilliVision — Explainable AI Quality Grading</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0605;
+  --bg2: #130a08;
+  --bg3: #1c1009;
+  --card: #1e1009;
+  --card2: #261408;
+  --border: #3a1a0a;
+  --border2: #4d2510;
+  --red: #e8300a;
+  --red2: #ff5733;
+  --red3: #c1440e;
+  --orange: #f97316;
+  --gold: #d4870a;
+  --text: #f5ebe0;
+  --text2: #c4a882;
+  --text3: #896550;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --radius: 16px;
+  --glow: 0 0 40px rgba(232,48,10,0.15);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ─── BG Texture ─── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,48,10,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(193,68,14,0.05) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+
+/* ─── HEADER ─── */
+header{
+  position:relative;z-index:10;
+  padding:2rem 2rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{
+  width:42px;height:42px;
+  background:linear-gradient(135deg,var(--red),var(--red3));
+  border-radius:10px;
+  display:grid;place-items:center;
+  font-size:22px;
+  box-shadow:0 0 20px rgba(232,48,10,0.4);
+}
+.logo-text{
+  font-family:'Playfair Display',serif;
+  font-size:1.5rem;font-weight:900;
+  background:linear-gradient(90deg,var(--text),var(--red2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo-sub{font-size:0.7rem;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;margin-top:1px;}
+.header-badge{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;color:var(--red2);
+  border:1px solid var(--border2);
+  padding:4px 12px;border-radius:20px;
+  background:rgba(232,48,10,0.06);
+  letter-spacing:0.05em;
+}
+
+/* ─── MAIN LAYOUT ─── */
+main{
+  position:relative;z-index:1;
+  max-width:1200px;margin:0 auto;
+  padding:3rem 2rem;
+}
+
+/* ─── HERO ─── */
+.hero{text-align:center;margin-bottom:3.5rem;}
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2rem,5vw,3.8rem);font-weight:900;
+  line-height:1.1;margin-bottom:1rem;
+}
+.hero h1 span{
+  background:linear-gradient(90deg,var(--red2),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero p{color:var(--text2);font-size:1.05rem;max-width:560px;margin:0 auto 2rem;line-height:1.7;}
+.tech-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.chip{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;letter-spacing:0.08em;
+  padding:5px 12px;border-radius:20px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);color:var(--text3);
+}
+
+/* ─── UPLOAD ZONE ─── */
+#upload-zone{
+  border:2px dashed var(--border2);
+  border-radius:var(--radius);
+  background:var(--card);
+  padding:3.5rem 2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  position:relative;overflow:hidden;
+  margin-bottom:2rem;
+}
+#upload-zone::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(232,48,10,0.03),transparent,rgba(193,68,14,0.03));
+  pointer-events:none;
+}
+#upload-zone:hover,#upload-zone.drag-over{
+  border-color:var(--red);
+  background:var(--card2);
+  box-shadow:var(--glow);
+}
+.upload-icon{
+  width:72px;height:72px;margin:0 auto 1.5rem;
+  background:rgba(232,48,10,0.1);
+  border:1px solid var(--border2);
+  border-radius:50%;display:grid;place-items:center;
+  font-size:2rem;
+  transition:transform 0.3s ease;
+}
+#upload-zone:hover .upload-icon{transform:scale(1.1);}
+.upload-title{font-size:1.1rem;font-weight:600;margin-bottom:0.4rem;}
+.upload-sub{color:var(--text3);font-size:0.85rem;margin-bottom:1.2rem;}
+.upload-btn{
+  display:inline-block;
+  padding:10px 28px;
+  background:linear-gradient(90deg,var(--red),var(--red3));
+  color:#fff;border-radius:8px;font-size:0.85rem;font-weight:600;
+  border:none;cursor:pointer;
+  transition:opacity 0.2s;
+}
+.upload-btn:hover{opacity:0.85;}
+#file-input{display:none;}
+.upload-hint{
+  margin-top:1rem;font-size:0.75rem;color:var(--text3);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ─── PREVIEW ─── */
+#preview-section{display:none;margin-bottom:2rem;}
+.preview-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;
+  display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;
+}
+#preview-img{
+  width:100px;height:100px;object-fit:cover;
+  border-radius:10px;border:1px solid var(--border2);
+}
+.preview-info{flex:1;min-width:200px;}
+.preview-name{font-weight:600;margin-bottom:4px;}
+.preview-meta{font-size:0.8rem;color:var(--text3);}
+.analyse-btn{
+  padding:12px 32px;
+  background:linear-gradient(90deg,var(--red),var(--red3));
+  color:#fff;border:none;border-radius:10px;
+  font-size:0.95rem;font-weight:600;cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;gap:8px;
+}
+.analyse-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(232,48,10,0.35);}
+.analyse-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.reset-btn{
+  padding:10px 20px;background:transparent;
+  border:1px solid var(--border2);color:var(--text2);
+  border-radius:8px;cursor:pointer;font-size:0.85rem;
+  transition:all 0.2s;margin-left:8px;
+}
+.reset-btn:hover{border-color:var(--red);color:var(--red2);}
+
+/* ─── LOADING ─── */
+#loading{display:none;text-align:center;padding:3rem;}
+.spinner{
+  width:52px;height:52px;
+  border:3px solid var(--border2);
+  border-top-color:var(--red);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 1.2rem;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{color:var(--text2);font-size:0.9rem;}
+.loading-step{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.75rem;color:var(--text3);
+  margin-top:8px;min-height:20px;
+}
+
+/* ─── RESULTS ─── */
+#results{display:none;}
+.results-header{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:2rem;
+}
+.results-header h2{
+  font-family:'Playfair Display',serif;
+  font-size:1.6rem;
+}
+.status-badge{
+  padding:5px 14px;border-radius:20px;
+  font-size:0.75rem;font-weight:600;letter-spacing:0.05em;
+  text-transform:uppercase;
+}
+.status-good{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+.status-bad{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);}
+
+/* ─── RESULTS GRID ─── */
+.results-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+  gap:1.5rem;
+  margin-bottom:1.5rem;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1.5rem;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+.card-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--text3);
+  margin-bottom:1rem;
+}
+
+/* Type card */
+.type-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.7rem;font-weight:700;
+  margin-bottom:0.3rem;
+  color:var(--text);
+}
+.type-meta{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;
+}
+.meta-pill{
+  font-size:0.72rem;padding:3px 10px;border-radius:12px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--text2);
+}
+.scoville-pill{
+  background:rgba(232,48,10,0.1);border-color:var(--border2);color:var(--red2);
+}
+.type-desc{font-size:0.85rem;color:var(--text2);line-height:1.65;}
+
+/* Confidence bar */
+.conf-label{font-size:0.8rem;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;}
+.conf-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:1rem;}
+.conf-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));border-radius:3px;transition:width 1s ease;}
+
+/* Grade card */
+.grade-display{
+  display:flex;align-items:center;gap:1.2rem;margin-bottom:1.2rem;
+}
+.grade-badge{
+  width:68px;height:68px;
+  border-radius:12px;
+  display:grid;place-items:center;
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem;font-weight:900;
+  flex-shrink:0;
+}
+.grade-label{font-size:1.15rem;font-weight:600;margin-bottom:2px;}
+.grade-sub{font-size:0.8rem;color:var(--text3);}
+.quality-score-big{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2.8rem;font-weight:600;
+  line-height:1;margin-bottom:0.3rem;
+}
+.quality-desc{font-size:0.82rem;color:var(--text2);line-height:1.6;}
+
+/* CV Features */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.feature-item{}
+.feature-name{font-size:0.72rem;color:var(--text3);margin-bottom:4px;}
+.feature-bar-wrap{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:3px;}
+.feature-bar{height:100%;border-radius:2px;transition:width 1s ease;}
+.feature-val{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text2);}
+
+/* Top-3 */
+.pred-list{display:flex;flex-direction:column;gap:10px;}
+.pred-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid transparent;
+  transition:border-color 0.2s;
+}
+.pred-item.top{border-color:var(--border2);}
+.pred-rank{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem;color:var(--text3);
+  width:20px;
+}
+.pred-color{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pred-name{flex:1;font-size:0.85rem;font-weight:500;}
+.pred-conf{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text2);}
+.pred-bar-bg{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px;}
+.pred-bar{height:100%;border-radius:2px;}
+
+/* Images row */
+.images-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+  margin-bottom:1.5rem;
+}
+.img-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;overflow:hidden;}
+.img-card img{width:100%;border-radius:8px;display:block;max-height:280px;object-fit:contain;background:#111;}
+.img-card-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:0.75rem;
+}
+.gradcam-legend{
+  display:flex;gap:6px;margin-top:8px;align-items:center;
+  font-size:0.72rem;color:var(--text3);flex-wrap:wrap;
+}
+.legend-bar{
+  height:8px;flex:1;max-width:160px;
+  border-radius:4px;
+  background:linear-gradient(90deg,#00f,#0ff,#0f0,#ff0,#f00);
+}
+
+/* Recommendation */
+.rec-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1.4rem 1.8rem;
+  margin-bottom:1.5rem;
+  font-size:0.95rem;
+  line-height:1.65;
+}
+
+/* Chilli info cards */
+.info-section{margin-top:2rem;}
+.info-section h3{
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem;margin-bottom:1rem;
+  color:var(--text2);
+}
+.chilli-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:1rem;
+}
+.chilli-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:1rem;
+  transition:border-color 0.2s,transform 0.2s;
+  cursor:default;
+}
+.chilli-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.chilli-card.active{border-color:var(--red3);background:var(--card2);}
+.cc-dot{width:10px;height:10px;border-radius:50%;margin-bottom:8px;}
+.cc-name{font-size:0.85rem;font-weight:600;margin-bottom:3px;}
+.cc-origin{font-size:0.72rem;color:var(--text3);margin-bottom:4px;}
+.cc-scoville{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--red2);}
+
+/* Responsive */
+@media(max-width:640px){
+  .images-row{grid-template-columns:1fr;}
+  .feature-grid{grid-template-columns:1fr;}
+  header{flex-direction:column;gap:12px;}
+}
+
+/* Fade-in */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp 0.5s ease forwards;}
+
+/* Scroll bar */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌶</div>
+    <div>
+      <div class="logo-text">ChilliVision</div>
+      <div class="logo-sub">Explainable AI Quality Grading</div>
+    </div>
+  </div>
+  <div class="header-badge">MobileNetV2 + GradCAM v1.0</div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero fade-up">
+    <h1>Automated <span>Quality Grading</span><br/>of Red Chilli</h1>
+    <p>Deep learning framework that classifies Indian chilli varieties and grades their quality with explainable AI visualisations.</p>
+    <div class="tech-chips">
+      <span class="chip">MobileNetV2</span>
+      <span class="chip">GradCAM XAI</span>
+      <span class="chip">OpenCV Features</span>
+      <span class="chip">Flask API</span>
+      <span class="chip">5 Chilli Classes</span>
+      <span class="chip">4 Quality Grades</span>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload-zone"
+    onclick="document.getElementById('file-input').click()"
+    ondragover="handleDragOver(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleDrop(event)">
+    <div class="upload-icon">📷</div>
+    <div class="upload-title">Upload Red Chilli Image</div>
+    <div class="upload-sub">Drag & drop or click to browse your image</div>
+    <button class="upload-btn" onclick="event.stopPropagation();document.getElementById('file-input').click()">
+      Choose Image
+    </button>
+    <div class="upload-hint">Supports JPG, PNG, WEBP · Max 10 MB</div>
+    <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)"/>
+  </div>
+
+  <!-- PREVIEW -->
+  <div id="preview-section">
+    <div class="preview-card">
+      <img id="preview-img" src="" alt="Preview"/>
+      <div class="preview-info">
+        <div class="preview-name" id="preview-name">—</div>
+        <div class="preview-meta" id="preview-meta">—</div>
+      </div>
+      <button class="analyse-btn" id="analyse-btn" onclick="runAnalysis()">
+        <span>🔬</span> Analyse Chilli
+      </button>
+      <button class="reset-btn" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Analysing your chilli image…</div>
+    <div class="loading-step" id="loading-step">Initialising model…</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <div class="results-header fade-up">
+      <h2>Analysis Results</h2>
+      <span class="status-badge" id="status-badge">—</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text3);margin-left:auto;" id="proc-time"></span>
+    </div>
+
+    <!-- IMAGES ROW -->
+    <div class="images-row fade-up">
+      <div class="img-card">
+        <div class="img-card-label">📷 Uploaded Image</div>
+        <img id="orig-img" src="" alt="Original"/>
+      </div>
+      <div class="img-card" id="gradcam-card">
+        <div class="img-card-label">🔥 GradCAM — Decision Heatmap</div>
+        <img id="gradcam-img" src="" alt="GradCAM"/>
+        <div class="gradcam-legend">
+          <span>Low</span>
+          <div class="legend-bar"></div>
+          <span>High Attention</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS GRID -->
+    <div class="results-grid fade-up">
+
+      <!-- Type card -->
+      <div class="card">
+        <div class="card-label">🌶 Chilli Variety Identified</div>
+        <div class="type-name" id="r-type-name">—</div>
+        <div class="type-meta" id="r-type-meta"></div>
+        <div class="conf-label">
+          <span>Confidence</span>
+          <span id="r-conf-val">—</span>
+        </div>
+        <div class="conf-bar"><div class="conf-fill" id="r-conf-bar" style="width:0%"></div></div>
+        <div class="type-desc" id="r-type-desc">—</div>
+      </div>
+
+      <!-- Grade card -->
+      <div class="card">
+        <div class="card-label">🏅 Quality Assessment</div>
+        <div class="grade-display">
+          <div class="grade-badge" id="r-grade-badge">—</div>
+          <div>
+            <div class="quality-score-big" id="r-score">—</div>
+            <div class="grade-label" id="r-grade-label">—</div>
+            <div class="grade-sub" id="r-grade">—</div>
+          </div>
+        </div>
+        <div class="quality-desc" id="r-quality-desc">—</div>
+      </div>
+
+      <!-- CV Features -->
+      <div class="card">
+        <div class="card-label">🔬 CV Feature Analysis</div>
+        <div class="feature-grid" id="r-features"></div>
+      </div>
+
+      <!-- Top-3 -->
+      <div class="card">
+        <div class="card-label">📊 Top Predictions</div>
+        <div class="pred-list" id="r-top3"></div>
+      </div>
+
+    </div>
+
+    <!-- RECOMMENDATION -->
+    <div class="rec-card fade-up" id="r-rec">—</div>
+
+    <!-- CHILLI CATALOGUE -->
+    <div class="info-section fade-up">
+      <h3>Indian Chilli Variety Catalogue</h3>
+      <div class="chilli-cards" id="chilli-catalogue"></div>
+    </div>
+
+  </div><!-- /results -->
+
+</main>
+
+<script>
+// Dynamically use the same host the browser opened the page from,
+// so it works whether you visit via localhost OR the machine's IP (e.g. 172.0.30.29).
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:5000`;
+let selectedFile = null;
+
+// ── Chilli catalogue data (shown below results) ──
+const CHILLI_TYPES = [
+  {name:"Byadagi Chilli",origin:"Karnataka, India",scoville:"10,000–50,000 SHU",color:"#C1440E"},
+  {name:"Kashmiri Chilli",origin:"Kashmir, India",scoville:"1,000–2,000 SHU",color:"#E8300A"},
+  {name:"Guntur Sannam",origin:"Andhra Pradesh, India",scoville:"35,000–40,000 SHU",color:"#A52A0A"},
+  {name:"Kanthari Chilli",origin:"Kerala, India",scoville:"50,000–100,000 SHU",color:"#FF4500"},
+  {name:"Wrinkled/Dried",origin:"Pan-India",scoville:"15,000–30,000 SHU",color:"#8B2500"},
+];
+
+// Build catalogue
+function buildCatalogue(activeName=''){
+  const el = document.getElementById('chilli-catalogue');
+  el.innerHTML = CHILLI_TYPES.map(c=>`
+    <div class="chilli-card ${activeName===c.name?'active':''}">
+      <div class="cc-dot" style="background:${c.color}"></div>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-origin">📍 ${c.origin}</div>
+      <div class="cc-scoville">🔥 ${c.scoville}</div>
+    </div>
+  `).join('');
+}
+buildCatalogue();
+
+// ── Drag & Drop ──
+function handleDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag-over');}
+function handleDragLeave(){document.getElementById('upload-zone').classList.remove('drag-over');}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')) setFile(f);
+}
+function handleFileSelect(e){const f=e.target.files[0];if(f) setFile(f);}
+
+function setFile(file){
+  selectedFile=file;
+  const url=URL.createObjectURL(file);
+  document.getElementById('preview-img').src=url;
+  document.getElementById('preview-name').textContent=file.name;
+  document.getElementById('preview-meta').textContent=
+    `${(file.size/1024).toFixed(1)} KB · ${file.type||'image'}`;
+  document.getElementById('preview-section').style.display='block';
+  document.getElementById('results').style.display='none';
+  document.getElementById('loading').style.display='none';
+}
+
+function resetAll(){
+  selectedFile=null;
+  document.getElementById('file-input').value='';
+  document.getElementById('preview-section').style.display='none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('upload-zone').style.display='block';
+  buildCatalogue();
+}
+
+// ── Loading step animation ──
+const STEPS = ['Preprocessing image…','Extracting colour features…','Running ChilliNet forward pass…','Computing GradCAM heatmap…','Analysing CV quality metrics…','Generating grade report…'];
+let stepInterval=null;
+function startStepAnim(){
+  let i=0;
+  document.getElementById('loading-step').textContent=STEPS[0];
+  stepInterval=setInterval(()=>{
+    i=(i+1)%STEPS.length;
+    document.getElementById('loading-step').textContent=STEPS[i];
+  },900);
+}
+function stopStepAnim(){clearInterval(stepInterval);}
+
+// ── Analyse ──
+async function runAnalysis(){
+  if(!selectedFile) return;
+  const btn=document.getElementById('analyse-btn');
+  btn.disabled=true;
+  document.getElementById('preview-section').style.display='block';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('results').style.display='none';
+  startStepAnim();
+
+  const fd=new FormData();
+  fd.append('image',selectedFile);
+
+  try{
+    const res=await fetch(`${API_BASE}/api/analyse`,{method:'POST',body:fd});
+    if(!res.ok){const err=await res.json();throw new Error(err.error||'Server error');}
+    const data=await res.json();
+    stopStepAnim();
+    document.getElementById('loading').style.display='none';
+    renderResults(data);
+  } catch(e){
+    stopStepAnim();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('loading').innerHTML=`<div style="color:#ef4444;padding:2rem;text-align:center">
+      <div style="font-size:2rem;margin-bottom:1rem">⚠️</div>
+      <div style="font-weight:600;margin-bottom:8px">Analysis Failed</div>
+      <div style="color:var(--text3);font-size:0.85rem">${e.message}</div>
+      <div style="margin-top:1rem;font-size:0.78rem;color:var(--text3)">Make sure the Flask server is running on port 5000</div>
+    </div>`;
+    document.getElementById('loading').style.display='block';
+  } finally{
+    btn.disabled=false;
+  }
+}
+
+function renderResults(d){
+  // Header
+  const badge=document.getElementById('status-badge');
+  if(d.is_good){badge.textContent='✓ Good Quality';badge.className='status-badge status-good';}
+  else{badge.textContent='✗ Low Quality';badge.className='status-badge status-bad';}
+  document.getElementById('proc-time').textContent=`⏱ ${d.processing_time_s}s`;
+
+  // Images
+  document.getElementById('orig-img').src=d.original_image||'';
+  if(d.gradcam_image){
+    document.getElementById('gradcam-img').src=d.gradcam_image;
+    document.getElementById('gradcam-card').style.display='block';
+  } else {
+    document.getElementById('gradcam-card').style.display='none';
+  }
+
+  // Type
+  document.getElementById('r-type-name').textContent=d.predicted_type;
+  document.getElementById('r-type-meta').innerHTML=`
+    <span class="meta-pill">📍 ${d.origin}</span>
+    <span class="meta-pill scoville-pill">🔥 ${d.scoville}</span>
+  `;
+  document.getElementById('r-conf-val').textContent=`${d.type_confidence}%`;
+  setTimeout(()=>{document.getElementById('r-conf-bar').style.width=d.type_confidence+'%';},100);
+  document.getElementById('r-type-desc').textContent=d.type_description;
+
+  // Grade
+  const qc=d.quality_color;
+  const gb=document.getElementById('r-grade-badge');
+  gb.textContent=d.quality_grade;
+  gb.style.background=hexToRgba(qc,0.15);
+  gb.style.border=`2px solid ${hexToRgba(qc,0.4)}`;
+  gb.style.color=qc;
+  const scoreEl=document.getElementById('r-score');
+  scoreEl.textContent='0';
+  scoreEl.style.color=qc;
+  animateCounter(scoreEl,0,d.quality_score,1000,'%');
+  document.getElementById('r-grade-label').textContent=d.quality_label;
+  document.getElementById('r-grade').textContent=d.quality_grade;
+  document.getElementById('r-quality-desc').textContent=d.quality_description;
+
+  // Features
+  const fEl=document.getElementById('r-features');
+  const fLabels={red_dominance:'Red Dominance',color_saturation:'Colour Saturation',surface_uniformity:'Surface Uniformity',sharpness:'Edge Sharpness',defect_free_score:'Defect Free',texture_quality:'Texture Quality'};
+  fEl.innerHTML=Object.entries(d.cv_features).map(([k,v])=>{
+    const pct=v;
+    const col=pct>=70?'var(--green)':pct>=40?'var(--yellow)':'#ef4444';
+    return `<div class="feature-item">
+      <div class="feature-name">${fLabels[k]||k}</div>
+      <div class="feature-bar-wrap"><div class="feature-bar" style="width:0%;background:${col}" data-w="${pct}"></div></div>
+      <div class="feature-val">${v}%</div>
+    </div>`;
+  }).join('');
+  setTimeout(()=>{
+    fEl.querySelectorAll('.feature-bar').forEach(b=>{b.style.width=b.dataset.w+'%';});
+  },200);
+
+  // Top3
+  const t3El=document.getElementById('r-top3');
+  t3El.innerHTML=d.top3_predictions.map((p,i)=>`
+    <div class="pred-item ${i===0?'top':''}">
+      <div class="pred-rank">#${p.rank}</div>
+      <div class="pred-color" style="background:${p.color}"></div>
+      <div>
+        <div class="pred-name">${p.type}</div>
+        <div class="pred-bar-bg"><div class="pred-bar" style="width:0%;background:${p.color}" data-w="${p.confidence}"></div></div>
+      </div>
+      <div class="pred-conf">${p.confidence}%</div>
+    </div>
+  `).join('');
+  setTimeout(()=>{
+    t3El.querySelectorAll('.pred-bar').forEach(b=>{b.style.width=b.dataset.w+'%';});
+  },300);
+
+  // Recommendation
+  document.getElementById('r-rec').textContent=d.recommendation;
+
+  // Catalogue
+  buildCatalogue(d.predicted_type);
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function animateCounter(el,from,to,duration,suffix=''){
+  const start=performance.now();
+  function step(now){
+    const p=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=Math.round(from+(to-from)*ease)+suffix;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function hexToRgba(hex,alpha){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+</script>
+</body>
+</html>
